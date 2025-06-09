@@ -1,0 +1,12 @@
+[package]
+name = "simple-rest-client"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.98"
+iced = "0.13.1"
+reqwest = { version = "0.12.19", features = ["json"] }
+rusqlite = { version = "0.36.0", features = ["bundled"] }
+serde = "1.0.219"
+tokio = { version = "1.45.1", features = ["full"] }
