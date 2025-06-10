@@ -96,7 +96,13 @@ impl DataLayer {
             .expect("Failed to logout");
 
         match result.error_for_status_ref() {
-            Ok(_) => Ok(()),
+            Ok(_) => {
+                self.config.creds = data_types::Credentials::default();
+
+                self.config.store_config();
+
+                Ok(())
+            },
             Err(e) => Err(anyhow::anyhow!("Failed to logout: {}", e)),
         }
     }

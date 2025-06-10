@@ -6,7 +6,7 @@ use std::{
 
 use crate::data_types;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Config {
     pub base_url: String,
     pub creds: data_types::Credentials,
