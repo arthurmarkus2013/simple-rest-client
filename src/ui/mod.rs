@@ -1,7 +1,6 @@
 use iced::widget::{Column, column, text};
 
-#[path = "data_layer.rs"]
-mod data_layer;
+use crate::communication_layer;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Message {}
