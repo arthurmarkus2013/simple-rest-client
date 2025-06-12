@@ -1,7 +1,7 @@
 use crate::data_types;
 
 use data_types::Role;
-use serde::{ser, Serialize};
+use serde::{Serialize, ser};
 
 use crate::config;
 
@@ -77,11 +77,10 @@ impl DataLayer {
             Ok(_) => {
                 self.config.creds = result.json::<data_types::Credentials>().await?;
 
-
                 self.config.store_config();
 
                 Ok(())
-            },
+            }
             Err(e) => Err(anyhow::anyhow!("Failed to register user: {}", e)),
         }
     }
@@ -102,7 +101,7 @@ impl DataLayer {
                 self.config.store_config();
 
                 Ok(())
-            },
+            }
             Err(e) => Err(anyhow::anyhow!("Failed to logout: {}", e)),
         }
     }

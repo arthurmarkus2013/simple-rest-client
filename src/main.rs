@@ -1,15 +1,23 @@
-mod ui;
-mod data_types;
-mod config;
+use tokio::runtime::Runtime;
+
 mod communication_layer;
+mod config;
+mod data_types;
+mod ui;
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let mut terminal = ratatui::init();
+fn main() -> Result<(), eframe::Error> {
+    let rt = Runtime::new().expect("Failed to create Tokio runtime");
+    let _ = rt.enter();
 
-    let result = ui::Ui::default().run(&mut terminal);
+    let options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size([1000.0, 700.0]),
+        ..Default::default()
+    };
 
-    ratatui::restore();
-
-    result
+    eframe::run_native(
+        "My Application",
+        options,
+        Box::new(|_| Ok(Box::<ui::MainUi>::default())),
+    )
 }
