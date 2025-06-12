@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     fs,
     io::{BufReader, BufWriter, Read, Write},
+    path::Path,
 };
 
 use crate::data_types;
@@ -14,31 +15,32 @@ pub struct Config {
 
 impl Config {
     pub fn load_config() -> Self {
-        let config_file = fs::File::options()
-            .create(true)
-            .open("./config.json")
-            .expect("Failed to open config file");
-        let mut reader = BufReader::new(config_file);
+        let cwd = fs::canonicalize("./").unwrap();
 
-        let mut config = String::new();
-        reader
-            .read_to_string(&mut config)
-            .expect("Failed to read config file");
+        let config = fs::read_to_string(cwd.join(Path::new("config.json")))
+            .unwrap_or("".to_string());
 
-        serde_json::from_str::<Self>(&config).expect("Failed to parse config file")
+        if !config.is_empty() {
+            serde_json::from_str::<Self>(&config).expect("Failed to parse config file")
+        } else {
+            Self::default()
+        }
     }
 
     pub fn store_config(&self) {
-        let config_file = fs::File::options()
-            .create(true)
-            .open("./config.json")
-            .expect("Failed to open config file");
-        let mut writer = BufWriter::new(config_file);
-
+        let cwd = fs::canonicalize("./").unwrap();
+        
         let config = serde_json::to_string(self).expect("Failed to serialize config");
 
-        writer
-            .write_all(config.as_bytes())
+        fs::write(cwd.join(Path::new("config.json")), config)
             .expect("Failed to write config file");
+    }
+
+    pub fn current_session_state(&self) -> data_types::SessionState {
+        if self.creds.current_token.is_empty() {
+            data_types::SessionState::Unauthenticated
+        } else {
+            data_types::SessionState::Authenticated
+        }
     }
 }

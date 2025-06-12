@@ -15,9 +15,16 @@ pub struct Movie {
     pub release_year: i32,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, PartialEq, Eq)]
 pub enum Role {
     #[default]
     Admin,
     User,
+}
+
+#[derive(Serialize, Deserialize, Default, PartialEq, Eq)]
+pub enum SessionState {
+    #[default]
+    Unauthenticated,
+    Authenticated,
 }
