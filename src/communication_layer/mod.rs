@@ -6,9 +6,9 @@ use serde::{Serialize, ser};
 use crate::config;
 
 pub struct DataLayer {
-    config: config::Config,
+    pub config: config::Config,
     movies: Vec<data_types::Movie>,
-    client: reqwest::Client,
+    client: reqwest::Client,    
 }
 
 impl DataLayer {
