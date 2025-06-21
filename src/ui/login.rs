@@ -1,26 +1,34 @@
-use crate::{data_types::Credentials, ui::dialog::{Dialog}};
+use crate::{data_types::Credentials, ui::dialog::{Callback, Dialog}};
 
 pub struct LoginDialog {
     creds: Credentials,
-    changed: bool,
+    callback: Box<dyn FnMut()>,
 }
 
 impl LoginDialog {
     pub fn new() -> Self {
         Self {
             creds: Credentials::default(),
-            changed: false,
+            callback: Box::new(|| {}),
         }
     }
-}
 
-impl LoginDialog {
     pub fn get_credentials(&self) -> Option<Credentials> {
-        if self.changed {
+        if self.valid() {
             Some(self.creds.clone())
         } else {
             None
         }
+    }
+
+    fn valid(&self) -> bool {
+        !self.creds.username.is_empty() && !self.creds.password.is_empty()
+    }
+}
+
+impl Callback for LoginDialog {
+    fn register_callback(&mut self, callback: Box<dyn FnMut()>) {
+        self.callback = callback;
     }
 }
 
@@ -40,8 +48,8 @@ impl Dialog for LoginDialog {
             });
 
             if ui.button("Login").clicked() {
-                if self.changed {
-                    //
+                if self.valid() {
+                    self.callback.as_mut()();
                 }
             }
         });

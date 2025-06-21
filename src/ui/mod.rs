@@ -3,7 +3,7 @@ use crate::{
     config::Config,
     data_types::{self, Role},
     ui::{
-        create_movie::CreateMovieDialog, dialog::Dialog, login::LoginDialog,
+        create_movie::CreateMovieDialog, dialog::{Callback, Dialog}, login::LoginDialog,
         register::RegisterDialog,
     },
 };
@@ -59,12 +59,12 @@ impl<'a> eframe::App for MainUi<'a> {
                     }
 
                     if ui.button("Register").clicked() {
-                        let dialog = RegisterDialog::default();
-                        
-                        if let Some((username, password, role)) = dialog.get_data() {
+                        let mut dialog = RegisterDialog::new();
+
+                        dialog.register_callback(Box::new(move || {
                             //
-                        }
-                        
+                        }));
+
                         self.show_dialog(Box::new(dialog));
                     }
 
@@ -72,12 +72,12 @@ impl<'a> eframe::App for MainUi<'a> {
                         == data_types::SessionState::Unauthenticated
                     {
                         if ui.button("Login").clicked() {
-                            let dialog = LoginDialog::new();
-                            
-                            if let Some(creds) = dialog.get_credentials() {
+                            let mut dialog = LoginDialog::new();
+
+                            dialog.register_callback(Box::new(move || {
                                 //
-                            }
-                            
+                            }));
+
                             self.show_dialog(Box::new(dialog));
                         }
                     } else {
@@ -87,7 +87,12 @@ impl<'a> eframe::App for MainUi<'a> {
                     }
 
                     if ui.button("Create Movie").clicked() {
-                        let dialog = CreateMovieDialog::new(None);
+                        let mut dialog = CreateMovieDialog::new(None);
+                        
+                        dialog.register_callback(Box::new(move || {
+                            //
+                        }));
+
                         self.show_dialog(Box::new(dialog));
                     }
 
@@ -96,7 +101,12 @@ impl<'a> eframe::App for MainUi<'a> {
                     }
 
                     if ui.button("Update Movie").clicked() {
-                        let dialog = CreateMovieDialog::new(Some(data_types::Movie::default()));
+                        let mut dialog = CreateMovieDialog::new(Some(data_types::Movie::default()));
+
+                        dialog.register_callback(Box::new(move || {
+                            //
+                        }));
+
                         self.show_dialog(Box::new(dialog));
                     }
 
