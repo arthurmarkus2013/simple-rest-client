@@ -22,7 +22,7 @@ mod dialog;
 mod login;
 mod register;
 
-type Callback<T: Dialog> = dyn FnMut(Ref<Box<T>>, RefMut<DataLayer>, RefMut<Alert>);
+type Callback<T> = dyn FnMut(Ref<Box<T>>, RefMut<DataLayer>, RefMut<Alert>);
 
 pub struct MainUi {
     dialogs: Vec<RefCell<Box<dyn Dialog>>>,
@@ -57,7 +57,7 @@ impl MainUi {
 }
 
 impl eframe::App for MainUi {
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _: &mut eframe::Frame) {
         egui::CentralPanel::default()
             .frame(egui::Frame {
                 fill: egui::Color32::from_white_alpha(255),
