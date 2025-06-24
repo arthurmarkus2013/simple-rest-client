@@ -18,6 +18,7 @@ pub struct Movie {
 #[derive(Serialize, Deserialize, Default, PartialEq, Eq)]
 pub enum Role {
     #[default]
+    None,
     Admin,
     User,
 }

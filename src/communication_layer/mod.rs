@@ -25,6 +25,14 @@ impl DataLayer {
     }
 
     pub fn register(&self, username: String, password: String, role: Role) -> anyhow::Result<()> {
+        if self.config.base_url.is_empty() {
+            return Err(anyhow::anyhow!("No base URL provided"));
+        }
+
+        if username.is_empty() || password.is_empty() || role == Role::None {
+            return Err(anyhow::anyhow!("No credentials provided"));
+        }
+
         let mut creds = std::collections::HashMap::new();
         creds.insert("username", username);
         creds.insert("password", password);
@@ -36,14 +44,16 @@ impl DataLayer {
             Role::Admin => {
                 creds.insert("role", "admin".into());
             }
+            Role::None => {
+                return Err(anyhow::anyhow!("No role provided"));
+            }
         }
 
         let result = self
             .client
             .post(format!("{}/register", self.config.base_url))
             .body(serde_json::to_string(&creds).expect("Failed to serialize user"))
-            .send()
-            .expect("Failed to register user");
+            .send()?;
 
         match result.error_for_status_ref() {
             Ok(_) => Ok(()),
@@ -52,6 +62,14 @@ impl DataLayer {
     }
 
     pub fn login(&mut self, username: String, password: String) -> anyhow::Result<()> {
+        if self.config.base_url.is_empty() {
+            return Err(anyhow::anyhow!("No base URL provided"));
+        }
+
+        if username.is_empty() || password.is_empty() {
+            return Err(anyhow::anyhow!("No credentials provided"));
+        }
+
         let mut creds = std::collections::HashMap::new();
         creds.insert("username", username);
         creds.insert("password", password);
@@ -60,8 +78,7 @@ impl DataLayer {
             .client
             .post(format!("{}/register", self.config.base_url))
             .body(serde_json::to_string(&creds).expect("Failed to serialize user"))
-            .send()
-            .expect("Failed to register user");
+            .send()?;
 
         match result.error_for_status_ref() {
             Ok(_) => {
@@ -76,12 +93,15 @@ impl DataLayer {
     }
 
     pub fn logout(&mut self) -> anyhow::Result<()> {
+        if self.config.base_url.is_empty() {
+            return Err(anyhow::anyhow!("No base URL provided"));
+        }
+
         let result = self
             .client
             .post(format!("{}/logout", self.config.base_url))
             .body(serde_json::to_string(&self.config.creds).expect("Failed to serialize token"))
-            .send()
-            .expect("Failed to logout");
+            .send()?;
 
         match result.error_for_status_ref() {
             Ok(_) => {
@@ -96,13 +116,20 @@ impl DataLayer {
     }
 
     pub fn create_movie(&self, movie: data_types::Movie) -> anyhow::Result<()> {
+        if self.config.base_url.is_empty() {
+            return Err(anyhow::anyhow!("No base URL provided"));
+        }
+
+        if movie.id == -1 {
+            return Ok(());
+        }
+
         let result = self
             .client
             .post(format!("{}/movie/create", self.config.base_url))
             .body(serde_json::to_string(&movie).expect("Failed to serialize movie"))
             .header("Authorization", &self.config.creds.current_token)
-            .send()
-            .expect("Failed to create movie");
+            .send()?;
 
         match result.error_for_status_ref() {
             Ok(_) => Ok(()),
@@ -114,14 +141,21 @@ impl DataLayer {
     }
 
     pub fn list_movies(&self, id: Option<i32>) -> anyhow::Result<Vec<data_types::Movie>> {
+        if self.config.base_url.is_empty() {
+            return Err(anyhow::anyhow!("No base URL provided"));
+        }
+
         match id {
             Some(id) => {
+                if id == -1 {
+                    return Ok(Vec::new());
+                }
+
                 let result = self
                     .client
                     .post(format!("{}/movie/list/{}", self.config.base_url, id))
                     .header("Authorization", &self.config.creds.current_token)
-                    .send()
-                    .expect("Failed to fetch movie");
+                    .send()?;
 
                 match result.error_for_status_ref() {
                     Ok(_) => Ok(vec![result.json::<data_types::Movie>()?]),
@@ -137,8 +171,7 @@ impl DataLayer {
                     .client
                     .post(format!("{}/movie/list", self.config.base_url))
                     .header("Authorization", &self.config.creds.current_token)
-                    .send()
-                    .expect("Failed to fetch movies");
+                    .send()?;
 
                 match result.error_for_status_ref() {
                     Ok(_) => Ok(result.json::<Vec<data_types::Movie>>()?),
@@ -152,6 +185,14 @@ impl DataLayer {
     }
 
     pub fn update_movie(&self, movie: data_types::Movie) -> anyhow::Result<()> {
+        if self.config.base_url.is_empty() {
+            return Err(anyhow::anyhow!("No base URL provided"));
+        }
+
+        if movie.id == -1 {
+            return Ok(());
+        }
+
         let result = self
             .client
             .post(format!(
@@ -160,8 +201,7 @@ impl DataLayer {
             ))
             .body(serde_json::to_string(&movie).expect("Failed to serialize movie"))
             .header("Authorization", &self.config.creds.current_token)
-            .send()
-            .expect("Failed to update movie");
+            .send()?;
 
         match result.error_for_status_ref() {
             Ok(_) => Ok(()),
@@ -173,12 +213,19 @@ impl DataLayer {
     }
 
     pub fn delete_movie(&self, id: i32) -> anyhow::Result<()> {
+        if self.config.base_url.is_empty() {
+            return Err(anyhow::anyhow!("No base URL provided"));
+        }
+        
+        if id == -1 {
+            return Ok(());
+        }
+
         let result = self
             .client
             .delete(format!("{}/movie/delete/{}", self.config.base_url, id))
             .header("Authorization", &self.config.creds.current_token)
-            .send()
-            .expect("Failed to delete movie");
+            .send()?;
 
         match result.error_for_status_ref() {
             Ok(_) => Ok(()),
