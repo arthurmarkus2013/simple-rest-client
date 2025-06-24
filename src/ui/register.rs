@@ -1,12 +1,21 @@
-use egui::Window;
-
-use crate::ui::dialog::{Callback, Dialog};
+use crate::ui::dialog::Dialog;
 
 pub struct RegisterDialog {
-    pub username: String,
-    pub password: String,
-    pub role: String,
-    callback: Box<dyn FnMut()>,
+    username: String,
+    password: String,
+    role: String,
+    changed: bool,
+}
+
+impl Clone for RegisterDialog {
+    fn clone(&self) -> Self {
+        Self {
+            username: self.username.clone(),
+            password: self.password.clone(),
+            role: self.role.clone(),
+            changed: self.changed,
+        }
+    }
 }
 
 impl RegisterDialog {
@@ -15,7 +24,7 @@ impl RegisterDialog {
             username: String::new(),
             password: String::new(),
             role: "".to_string(),
-            callback: Box::new(|| {}),
+            changed: false,
         }
     }
 
@@ -33,12 +42,6 @@ impl RegisterDialog {
 
     fn valid(&self) -> bool {
         !self.username.is_empty() && !self.password.is_empty() && !self.role.is_empty()
-    }
-}
-
-impl Callback for RegisterDialog {
-    fn register_callback(&mut self, callback: Box<dyn FnMut()>) {
-        self.callback = callback;
     }
 }
 
@@ -69,9 +72,17 @@ impl Dialog for RegisterDialog {
 
             if ui.button("Register").clicked() {
                 if self.valid() {
-                    self.callback.as_mut()();
+                    self.changed = true;
                 }
             }
         });
+    }
+
+    fn changed(&self) -> (bool, &str) {
+        (self.changed, "Register")
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }

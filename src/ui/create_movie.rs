@@ -1,9 +1,19 @@
-use crate::{data_types::Movie, ui::dialog::{Callback, Dialog}};
+use crate::{data_types::Movie, ui::dialog::Dialog};
 
 pub struct CreateMovieDialog {
     movie: Movie,
     update_mode: bool,
-    callback: Box<dyn FnMut()>,
+    changed: bool,
+}
+
+impl Clone for CreateMovieDialog {
+    fn clone(&self) -> Self {
+        Self {
+            movie: self.movie.clone(),
+            update_mode: self.update_mode,
+            changed: self.changed,
+        }
+    }
 }
 
 impl CreateMovieDialog {
@@ -12,12 +22,12 @@ impl CreateMovieDialog {
             Some(m) => Self {
                 movie: m,
                 update_mode: true,
-                callback: Box::new(|| {}),
+                changed: false,
             },
             None => Self {
                 movie: Movie::default(),
                 update_mode: false,
-                callback: Box::new(|| {}),
+                changed: false,
             },
         }
     }
@@ -31,13 +41,9 @@ impl CreateMovieDialog {
     }
 
     fn valid(&self) -> bool {
-        !self.movie.title.is_empty() && !self.movie.description.is_empty() && self.movie.release_year > -1
-    }
-}
-
-impl Callback for CreateMovieDialog {
-    fn register_callback(&mut self, callback: Box<dyn FnMut()>) {
-        self.callback = callback;
+        !self.movie.title.is_empty()
+            && !self.movie.description.is_empty()
+            && self.movie.release_year > -1
     }
 }
 
@@ -73,9 +79,21 @@ impl Dialog for CreateMovieDialog {
 
                 if ui.button(title).clicked() {
                     if self.valid() {
-                        self.callback.as_mut()();
+                        self.changed = true;
                     }
                 }
             });
+    }
+
+    fn changed(&self) -> (bool, &str) {
+        if self.update_mode {
+            (self.changed, "Update Movie")
+        } else {
+            (self.changed, "Create Movie")
+        }
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }

@@ -24,12 +24,7 @@ impl DataLayer {
         }
     }
 
-    pub fn register(
-        &self,
-        username: String,
-        password: String,
-        role: Role,
-    ) -> anyhow::Result<()> {
+    pub fn register(&self, username: String, password: String, role: Role) -> anyhow::Result<()> {
         let mut creds = std::collections::HashMap::new();
         creds.insert("username", username);
         creds.insert("password", password);
