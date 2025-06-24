@@ -1,16 +1,18 @@
 use std::{
     cell::{Ref, RefCell, RefMut},
-    collections::HashMap, ops::DerefMut,
+    collections::HashMap,
 };
 
-use egui_table::Table;
+use egui::{Layout, Sense};
+use egui_extras::{Column, TableBuilder};
 
 use crate::{
     communication_layer::DataLayer,
     config::Config,
     data_types::{self, Role},
     ui::{
-        create_movie::CreateMovieDialog, delegate::Delegate, dialog::Dialog, login::LoginDialog, register::RegisterDialog
+        create_movie::CreateMovieDialog, dialog::Dialog, login::LoginDialog,
+        register::RegisterDialog,
     },
 };
 
@@ -19,8 +21,6 @@ mod dialog;
 mod login;
 mod register;
 
-mod delegate;
-
 type Callback<T: Dialog> = dyn FnMut(Ref<Box<T>>, RefMut<DataLayer>);
 
 pub struct MainUi {
@@ -28,7 +28,7 @@ pub struct MainUi {
     data_layer: RefCell<DataLayer>,
     show_dialog: bool,
     callbacks: HashMap<String, Box<Callback<dyn Dialog>>>,
-    table_delegate: Delegate,
+    selected_movie_id: Option<i32>,
 }
 
 impl MainUi {
@@ -38,7 +38,7 @@ impl MainUi {
             data_layer: RefCell::new(DataLayer::new()),
             show_dialog: false,
             callbacks: HashMap::new(),
-            table_delegate: Delegate::new(),
+            selected_movie_id: None,
         }
     }
 
@@ -120,7 +120,6 @@ impl eframe::App for MainUi {
                                 self.data_layer.borrow_mut().logout();
                             }
                         }
-
                     });
 
                     ui.add_space(5.0);
@@ -148,11 +147,13 @@ impl eframe::App for MainUi {
                         }
 
                         if ui.button("List Movies").clicked() {
-                            self.table_delegate.movies = self.data_layer.borrow_mut().list_movies(None).unwrap();
+                            self.data_layer.borrow_mut().list_movies(None);
                         }
 
                         if ui.button("Update Movie").clicked() {
-                            let dialog = CreateMovieDialog::new(Some(data_types::Movie::default()));
+                            let dialog = CreateMovieDialog::new(Some(self.data_layer.borrow().movies.iter()
+                                .find(|&movie| movie.id == self.selected_movie_id.unwrap()).unwrap().clone()));
+
                             self.show_dialog(Box::new(dialog));
 
                             self.callbacks.insert(
@@ -171,15 +172,63 @@ impl eframe::App for MainUi {
                         }
 
                         if ui.button("Delete Movie").clicked() {
-                            //
+                            self.data_layer.borrow_mut().delete_movie(self.selected_movie_id.unwrap());
+                        }
+
+                        if ui.button("Clear Selection").clicked() {
+                            self.selected_movie_id = None;
                         }
                     });
+
+                    ui.add_space(10.0);
 
                     ui.horizontal(|ui| {
                         ui.add_space(5.0);
 
-                        let table = Table::new();
-                        table.show(ui, &mut self.table_delegate);
+                        ui.with_layout(Layout::centered_and_justified(ui.layout().main_dir())
+                        .with_cross_align(egui::Align::Center).with_cross_justify(true), |ui| {
+                            TableBuilder::new(ui)
+                                .animate_scrolling(true)
+                                .striped(true)
+                                .column(Column::auto().at_least(100.0))
+                                .column(Column::auto().at_least(200.0))
+                                .column(Column::auto().at_least(100.0))
+                                .sense(Sense::click())
+                                .auto_shrink(false)
+                                .resizable(false)
+                                .header(10.0, |mut header| {
+                                    header.col(|ui| {
+                                        ui.label("Movie Name");
+                                    });
+                                    header.col(|ui| {
+                                        ui.label("Description");
+                                    });
+                                    header.col(|ui| {
+                                        ui.label("Release Year");
+                                    });
+                                })
+                                .body(|mut body| {
+                                    for movie in self.data_layer.borrow().movies.iter() {
+                                        body.row(10.0, |mut row| {
+                                            row.col(|ui| {
+                                                ui.label(&movie.title);
+                                            });
+                                            row.col(|ui| {
+                                                ui.label(&movie.description);
+                                            });
+                                            row.col(|ui| {
+                                                ui.label(&movie.release_year.to_string());
+                                            });
+
+                                            if row.response().clicked() {
+                                                self.selected_movie_id = Some(movie.id);
+                                            }
+
+                                            row.set_selected(self.selected_movie_id == Some(movie.id));
+                                        });
+                                    }
+                                });
+                        });
                     });
                 });
 

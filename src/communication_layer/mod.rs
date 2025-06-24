@@ -6,7 +6,7 @@ use crate::config;
 
 pub struct DataLayer {
     pub config: config::Config,
-    movies: Vec<data_types::Movie>,
+    pub movies: Vec<data_types::Movie>,
     client: reqwest::blocking::Client,
 }
 
