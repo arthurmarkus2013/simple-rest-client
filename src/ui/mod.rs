@@ -221,8 +221,10 @@ impl eframe::App for MainUi {
                                             })
                                     })
                                     .unwrap_or_else(|| {
-                                        self.alert_box.borrow_mut().message =
+                                        if self.selected_movie_id.is_some() {
+                                            self.alert_box.borrow_mut().message =
                                             String::from("No movie found");
+                                        }
 
                                         &default_movie
                                     })
@@ -231,7 +233,7 @@ impl eframe::App for MainUi {
 
                             self.show_dialog(Box::new(dialog));
 
-                            self.callbacks.insert(
+                                self.callbacks.insert(
                                 "Update Movie".to_string(),
                                 Box::new(|dialog, data_layer, mut alert_box| {
                                     let update_movie_dialog = dialog
@@ -351,7 +353,7 @@ impl eframe::App for MainUi {
 
                 self.show_alert = changed;
 
-                if changed {
+                if self.show_alert {
                     self.alert_box.borrow_mut().show(ctx, &mut self.show_alert);
                 }
             });

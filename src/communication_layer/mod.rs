@@ -189,7 +189,7 @@ impl DataLayer {
             return Err(anyhow::anyhow!("No base URL provided"));
         }
 
-        if movie.id == -1 {
+        if movie.id == -1 || movie == data_types::Movie::default() {
             return Ok(());
         }
 
@@ -216,7 +216,7 @@ impl DataLayer {
         if self.config.base_url.is_empty() {
             return Err(anyhow::anyhow!("No base URL provided"));
         }
-        
+
         if id == -1 {
             return Ok(());
         }

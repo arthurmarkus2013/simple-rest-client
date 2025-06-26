@@ -26,11 +26,19 @@ impl Dialog for Alert {
                 ui.vertical(|ui| {
                     ui.label(self.message.as_str());
 
-                    if ui.button("OK").clicked() {
-                        self.reset();
-                    }
+                    ui.horizontal(|ui| {
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                            if ui.button("OK").clicked() {
+                                self.reset();
+                            }
+                        });
+                    });
                 });
             });
+
+            if !*open {
+                self.reset();
+            }
     }
 
     fn changed(&self) -> (bool, &str) {

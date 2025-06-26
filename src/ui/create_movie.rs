@@ -77,11 +77,15 @@ impl Dialog for CreateMovieDialog {
                     );
                 });
 
-                if ui.button(title).clicked() {
-                    if self.valid() {
-                        self.changed = true;
-                    }
-                }
+                ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                        if ui.button(title).clicked() {
+                            if self.valid() {
+                                self.changed = true;
+                            }
+                        }
+                    });
+                });
             });
     }
 

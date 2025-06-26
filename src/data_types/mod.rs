@@ -7,7 +7,7 @@ pub struct Credentials {
     pub current_token: String,
 }
 
-#[derive(Serialize, Deserialize, Default, Clone)]
+#[derive(Serialize, Deserialize, Default, Clone, PartialEq, Eq)]
 pub struct Movie {
     pub id: i32,
     pub title: String,
