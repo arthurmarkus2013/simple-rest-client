@@ -317,6 +317,11 @@ impl eframe::App for MainUi {
                                     body.rows(10.0, num_movies, |mut row| {
                                         let index = row.index();
 
+                                        row.set_selected(
+                                            self.selected_movie_id
+                                                == Some(self.data_layer.borrow().movies[index].id),
+                                        );
+
                                         row.col(|ui| {
                                             ui.label(&self.data_layer.borrow().movies[index].title);
                                         });
@@ -337,11 +342,6 @@ impl eframe::App for MainUi {
                                             self.selected_movie_id =
                                                 Some(self.data_layer.borrow().movies[index].id);
                                         }
-
-                                        row.set_selected(
-                                            self.selected_movie_id
-                                                == Some(self.data_layer.borrow().movies[index].id),
-                                        );
                                     });
                                 });
                         });
