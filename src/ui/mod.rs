@@ -3,7 +3,7 @@ use std::{
     collections::HashMap,
 };
 
-use egui::{Layout, Sense};
+use egui::Sense;
 use egui_extras::{Column, TableBuilder};
 
 use crate::{
@@ -32,6 +32,7 @@ pub struct MainUi {
     selected_movie_id: Option<i32>,
     alert_box: RefCell<Alert>,
     show_alert: bool,
+    server_url: String,
 }
 
 impl MainUi {
@@ -44,6 +45,7 @@ impl MainUi {
             selected_movie_id: None,
             alert_box: RefCell::new(Alert::new("Error".into())),
             show_alert: false,
+            server_url: String::new(),
         }
     }
 
@@ -54,18 +56,27 @@ impl MainUi {
             self.show_dialog = true;
         }
     }
+
+    fn reset_dialog(&mut self) {
+        self.dialogs.clear();
+        self.show_dialog = false;
+
+        self.callbacks.clear();
+    }
 }
 
 impl eframe::App for MainUi {
     fn update(&mut self, ctx: &egui::Context, _: &mut eframe::Frame) {
+        if !self.data_layer.borrow().config.base_url.is_empty() {
+            self.server_url = self.data_layer.borrow().config.base_url.clone();
+        }
+
         egui::CentralPanel::default()
             .frame(egui::Frame {
                 fill: egui::Color32::from_white_alpha(255),
                 ..Default::default()
             })
             .show(ctx, |ui| {
-                let mut server_url = String::new();
-
                 ui.vertical(|ui| {
                     ui.add_space(5.0);
 
@@ -74,11 +85,11 @@ impl eframe::App for MainUi {
 
                         ui.label("Server URL:");
                         if ui
-                            .text_edit_singleline(&mut server_url)
+                            .text_edit_singleline(&mut self.server_url)
                             .highlight()
                             .lost_focus()
                         {
-                            self.data_layer.borrow_mut().config.base_url = server_url.clone();
+                            self.data_layer.borrow_mut().config.base_url = self.server_url.clone();
                             self.data_layer.borrow_mut().config.store_config();
                         }
 
@@ -115,7 +126,8 @@ impl eframe::App for MainUi {
                             == data_types::SessionState::Unauthenticated
                         {
                             if ui.button("Login").clicked() {
-                                let dialog = LoginDialog::default();
+                                let dialog =
+                                    LoginDialog::new(self.data_layer.borrow().config.creds.clone());
                                 self.show_dialog(Box::new(dialog));
 
                                 self.callbacks.insert(
@@ -167,7 +179,7 @@ impl eframe::App for MainUi {
 
                             self.callbacks.insert(
                                 "Create Movie".to_string(),
-                                Box::new(|dialog, data_layer, mut alert_box| {
+                                Box::new(|dialog, mut data_layer, mut alert_box| {
                                     let create_movie_dialog = dialog
                                         .as_any()
                                         .downcast_ref::<CreateMovieDialog>()
@@ -223,7 +235,7 @@ impl eframe::App for MainUi {
                                     .unwrap_or_else(|| {
                                         if self.selected_movie_id.is_some() {
                                             self.alert_box.borrow_mut().message =
-                                            String::from("No movie found");
+                                                String::from("No movie found");
                                         }
 
                                         &default_movie
@@ -233,9 +245,9 @@ impl eframe::App for MainUi {
 
                             self.show_dialog(Box::new(dialog));
 
-                                self.callbacks.insert(
+                            self.callbacks.insert(
                                 "Update Movie".to_string(),
-                                Box::new(|dialog, data_layer, mut alert_box| {
+                                Box::new(|dialog, mut data_layer, mut alert_box| {
                                     let update_movie_dialog = dialog
                                         .as_any()
                                         .downcast_ref::<CreateMovieDialog>()
@@ -278,75 +290,96 @@ impl eframe::App for MainUi {
                     ui.horizontal(|ui| {
                         ui.add_space(5.0);
 
-                        ui.with_layout(
-                            Layout::centered_and_justified(ui.layout().main_dir())
-                                .with_cross_align(egui::Align::Center)
-                                .with_cross_justify(true),
-                            |ui| {
-                                TableBuilder::new(ui)
-                                    .animate_scrolling(true)
-                                    .striped(true)
-                                    .column(Column::auto().at_least(100.0))
-                                    .column(Column::auto().at_least(200.0))
-                                    .column(Column::auto().at_least(100.0))
-                                    .sense(Sense::click())
-                                    .auto_shrink(false)
-                                    .resizable(false)
-                                    .header(10.0, |mut header| {
-                                        header.col(|ui| {
-                                            ui.label("Movie Name");
-                                        });
-                                        header.col(|ui| {
-                                            ui.label("Description");
-                                        });
-                                        header.col(|ui| {
-                                            ui.label("Release Year");
-                                        });
-                                    })
-                                    .body(|mut body| {
-                                        for movie in self.data_layer.borrow().movies.iter() {
-                                            body.row(10.0, |mut row| {
-                                                row.col(|ui| {
-                                                    ui.label(&movie.title);
-                                                });
-                                                row.col(|ui| {
-                                                    ui.label(&movie.description);
-                                                });
-                                                row.col(|ui| {
-                                                    ui.label(&movie.release_year.to_string());
-                                                });
-
-                                                if row.response().clicked() {
-                                                    self.selected_movie_id = Some(movie.id);
-                                                }
-
-                                                row.set_selected(
-                                                    self.selected_movie_id == Some(movie.id),
-                                                );
-                                            });
-                                        }
+                        ui.vertical(|ui| {
+                            TableBuilder::new(ui)
+                                .animate_scrolling(true)
+                                .striped(true)
+                                .column(Column::initial(150.0).at_least(100.0))
+                                .column(Column::remainder())
+                                .column(Column::initial(100.0).at_least(100.0))
+                                .sense(Sense::click())
+                                .auto_shrink(false)
+                                .resizable(false)
+                                .header(10.0, |mut header| {
+                                    header.col(|ui| {
+                                        ui.label("Movie Name");
                                     });
-                            },
-                        );
+                                    header.col(|ui| {
+                                        ui.label("Description");
+                                    });
+                                    header.col(|ui| {
+                                        ui.label("Release Year");
+                                    });
+                                })
+                                .body(|body| {
+                                    let num_movies = self.data_layer.borrow().movies.len();
+
+                                    body.rows(10.0, num_movies, |mut row| {
+                                        let index = row.index();
+
+                                        row.col(|ui| {
+                                            ui.label(&self.data_layer.borrow().movies[index].title);
+                                        });
+                                        row.col(|ui| {
+                                            ui.label(
+                                                &self.data_layer.borrow().movies[index].description,
+                                            );
+                                        });
+                                        row.col(|ui| {
+                                            ui.label(
+                                                &self.data_layer.borrow().movies[index]
+                                                    .release_year
+                                                    .to_string(),
+                                            );
+                                        });
+
+                                        if row.response().clicked() {
+                                            self.selected_movie_id =
+                                                Some(self.data_layer.borrow().movies[index].id);
+                                        }
+
+                                        row.set_selected(
+                                            self.selected_movie_id
+                                                == Some(self.data_layer.borrow().movies[index].id),
+                                        );
+                                    });
+                                });
+                        });
                     });
                 });
 
+                let mut handled_callback = false;
+
                 for dialog in self.dialogs.iter_mut() {
-                    let mut dlg = dialog.borrow_mut();
+                    let changed: bool;
+                    let dialog_name: String;
 
-                    dlg.show(ctx, &mut self.show_dialog);
+                    {
+                        let mut dlg = dialog.borrow_mut();
 
-                    let (changed, dialog_name) = dlg.changed();
+                        dlg.show(ctx, &mut self.show_dialog);
+
+                        let (ch, dlg_name) = dlg.changed();
+
+                        changed = ch;
+                        dialog_name = dlg_name.into();
+                    }
 
                     if changed {
-                        self.callbacks.get_mut(dialog_name).map(|callback| {
+                        self.callbacks.get_mut(&dialog_name).map(|callback| {
                             callback(
                                 dialog.borrow(),
                                 self.data_layer.borrow_mut(),
                                 self.alert_box.borrow_mut(),
                             )
                         });
+
+                        handled_callback = true;
                     }
+                }
+
+                if handled_callback {
+                    self.reset_dialog();
                 }
 
                 let (changed, _) = self.alert_box.borrow().changed();
@@ -354,6 +387,8 @@ impl eframe::App for MainUi {
                 self.show_alert = changed;
 
                 if self.show_alert {
+                    self.show_dialog = false;
+
                     self.alert_box.borrow_mut().show(ctx, &mut self.show_alert);
                 }
             });

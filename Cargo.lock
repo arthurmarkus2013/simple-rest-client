@@ -3094,7 +3094,6 @@ dependencies = [
  "eframe",
  "egui",
  "egui_extras",
- "num-traits",
  "reqwest",
  "serde",
  "serde_json",

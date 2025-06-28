@@ -1,8 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::{
-    fs,
-    path::Path,
-};
+use std::{fs, path::Path};
 
 use crate::data_types;
 

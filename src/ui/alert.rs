@@ -36,9 +36,9 @@ impl Dialog for Alert {
                 });
             });
 
-            if !*open {
-                self.reset();
-            }
+        if !*open {
+            self.reset();
+        }
     }
 
     fn changed(&self) -> (bool, &str) {

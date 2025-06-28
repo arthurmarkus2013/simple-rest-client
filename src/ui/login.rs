@@ -1,6 +1,5 @@
 use crate::{data_types::Credentials, ui::dialog::Dialog};
 
-#[derive(Default)]
 pub struct LoginDialog {
     creds: Credentials,
     changed: bool,
@@ -16,6 +15,13 @@ impl Clone for LoginDialog {
 }
 
 impl LoginDialog {
+    pub fn new(creds: Credentials) -> Self {
+        Self {
+            creds,
+            changed: false,
+        }
+    }
+
     pub fn get_credentials(&self) -> Option<Credentials> {
         if self.valid() {
             Some(self.creds.clone())
