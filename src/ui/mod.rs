@@ -67,7 +67,7 @@ impl MainUi {
 
 impl eframe::App for MainUi {
     fn update(&mut self, ctx: &egui::Context, _: &mut eframe::Frame) {
-        if !self.data_layer.borrow().config.base_url.is_empty() {
+        if !self.data_layer.borrow().config.base_url.is_empty() && self.server_url.is_empty() {
             self.server_url = self.data_layer.borrow().config.base_url.clone();
         }
 

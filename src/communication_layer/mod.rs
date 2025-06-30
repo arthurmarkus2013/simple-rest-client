@@ -107,7 +107,7 @@ impl DataLayer {
         let result = self
             .client
             .post(format!("{}/logout", self.config.base_url))
-            .body(serde_json::to_string(&self.config.creds).expect("Failed to serialize token"))
+            .header("Authorization", &self.config.creds.current_token)
             .send()?;
 
         match result.error_for_status_ref() {
