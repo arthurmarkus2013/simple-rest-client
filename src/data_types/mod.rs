@@ -35,7 +35,7 @@ impl From<String> for Role {
         match role {
             _ if role == "Admin" => Role::Admin,
             _ if role == "User" => Role::User,
-            _ => Role::Admin,
+            _ => Role::default(),
         }
     }
 }
