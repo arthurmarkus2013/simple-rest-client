@@ -4,38 +4,42 @@ use crate::data_types;
 
 use data_types::Role;
 
-use crate::config;
+use crate::config::Config;
+use crate::data_types::Movie;
+use reqwest::{blocking::Client, StatusCode};
+
+use anyhow::{anyhow, Result};
 
 pub struct DataLayer {
-    pub config: config::Config,
+    pub config: Config,
     pub movies: Vec<data_types::Movie>,
-    client: reqwest::blocking::Client,
+    client: Client,
 }
 
 impl DataLayer {
     pub fn new() -> Self {
-        let client = reqwest::blocking::Client::builder()
+        let client = Client::builder()
             .user_agent("Simple REST Client/1.0.0")
             .build()
             .expect("Failed to create client");
 
         Self {
-            config: config::Config::load_config(),
+            config: Config::load_config(),
             movies: Vec::new(),
             client,
         }
     }
 
-    pub fn register(&self, username: String, password: String, role: Role) -> anyhow::Result<()> {
+    pub fn register(&self, username: String, password: String, role: Role) -> Result<()> {
         if self.config.base_url.is_empty() {
-            return Err(anyhow::anyhow!("No base URL provided"));
+            return Err(anyhow!("No base URL provided"));
         }
 
         if username.is_empty() || password.is_empty() || role == Role::None {
-            return Err(anyhow::anyhow!("No credentials provided"));
+            return Err(anyhow!("No credentials provided"));
         }
 
-        let mut creds = std::collections::HashMap::new();
+        let mut creds = HashMap::new();
         creds.insert("username", username);
         creds.insert("password", password);
 
@@ -47,7 +51,7 @@ impl DataLayer {
                 creds.insert("role", "admin".into());
             }
             Role::None => {
-                return Err(anyhow::anyhow!("No role provided"));
+                return Err(anyhow!("No role provided"));
             }
         }
 
@@ -59,23 +63,23 @@ impl DataLayer {
 
         match result.error_for_status_ref() {
             Ok(_) => Ok(()),
-            Err(e) => Err(anyhow::anyhow!("Failed to register user: {}", e)),
+            Err(e) => Err(anyhow!("Failed to register user: {}", e)),
         }
     }
 
-    pub fn login(&mut self, username: String, password: String) -> anyhow::Result<()> {
+    pub fn login(&mut self, username: String, password: String) -> Result<()> {
         if self.config.base_url.is_empty() {
-            return Err(anyhow::anyhow!("No base URL provided"));
+            return Err(anyhow!("No base URL provided"));
         }
 
         if username.is_empty() || password.is_empty() {
-            return Err(anyhow::anyhow!("No credentials provided"));
+            return Err(anyhow!("No credentials provided"));
         }
 
         self.config.creds.username = username.clone();
         self.config.creds.password = password.clone();
 
-        let mut creds = std::collections::HashMap::new();
+        let mut creds = HashMap::new();
         creds.insert("username", username);
         creds.insert("password", password);
 
@@ -95,13 +99,13 @@ impl DataLayer {
 
                 Ok(())
             }
-            Err(e) => Err(anyhow::anyhow!("Failed to log in: {}", e)),
+            Err(e) => Err(anyhow!("Failed to log in: {}", e)),
         }
     }
 
-    pub fn logout(&mut self) -> anyhow::Result<()> {
+    pub fn logout(&mut self) -> Result<()> {
         if self.config.base_url.is_empty() {
-            return Err(anyhow::anyhow!("No base URL provided"));
+            return Err(anyhow!("No base URL provided"));
         }
 
         let result = self
@@ -118,13 +122,13 @@ impl DataLayer {
 
                 Ok(())
             }
-            Err(e) => Err(anyhow::anyhow!("Failed to log out: {}", e)),
+            Err(e) => Err(anyhow!("Failed to log out: {}", e)),
         }
     }
 
-    pub fn create_movie(&mut self, movie: data_types::Movie) -> anyhow::Result<()> {
+    pub fn create_movie(&mut self, movie: Movie) -> Result<()> {
         if self.config.base_url.is_empty() {
-            return Err(anyhow::anyhow!("No base URL provided"));
+            return Err(anyhow!("No base URL provided"));
         }
 
         if movie.id == -1 {
@@ -140,19 +144,19 @@ impl DataLayer {
 
         match result.error_for_status_ref() {
             Ok(_) => Ok(()),
-            Err(e) if e.status() == Some(reqwest::StatusCode::UNAUTHORIZED) => {
+            Err(e) if e.status() == Some(StatusCode::UNAUTHORIZED) => {
                 self.config.creds.current_token.clear();
                 self.config.store_config();
 
-                Err(anyhow::anyhow!("Unauthorized"))
+                Err(anyhow!("Unauthorized"))
             }
-            Err(e) => Err(anyhow::anyhow!("Failed to create movie: {}", e)),
+            Err(e) => Err(anyhow!("Failed to create movie: {}", e)),
         }
     }
 
-    pub fn list_movies(&mut self, id: Option<i32>) -> anyhow::Result<Vec<data_types::Movie>> {
+    pub fn list_movies(&mut self, id: Option<i32>) -> Result<Vec<Movie>> {
         if self.config.base_url.is_empty() {
-            return Err(anyhow::anyhow!("No base URL provided"));
+            return Err(anyhow!("No base URL provided"));
         }
 
         match id {
@@ -171,10 +175,10 @@ impl DataLayer {
                     Ok(_) => {
                         let mut body = String::new();
                         let _ = result.read_to_string(&mut body)?;
-                        let data: HashMap<String, data_types::Movie> =
+                        let data: HashMap<String, Movie> =
                             match serde_json::from_str(&body) {
                                 Ok(data) => data,
-                                Err(_) => HashMap::<String, data_types::Movie>::new(),
+                                Err(_) => HashMap::<String, Movie>::new(),
                             };
 
                         if data.is_empty() {
@@ -184,16 +188,16 @@ impl DataLayer {
                         } else {
                             self.movies.clear();
 
-                            Err(anyhow::anyhow!("No movie found"))
+                            Err(anyhow!("No movie found"))
                         }
                     }
-                    Err(e) if e.status() == Some(reqwest::StatusCode::UNAUTHORIZED) => {
+                    Err(e) if e.status() == Some(StatusCode::UNAUTHORIZED) => {
                         self.config.creds.current_token.clear();
                         self.config.store_config();
 
-                        Err(anyhow::anyhow!("Unauthorized"))
+                        Err(anyhow!("Unauthorized"))
                     }
-                    Err(e) => Err(anyhow::anyhow!("Failed to fetch movie: {}", e)),
+                    Err(e) => Err(anyhow!("Failed to fetch movie: {}", e)),
                 }
             }
 
@@ -208,10 +212,10 @@ impl DataLayer {
                     Ok(_) => {
                         let mut body = String::new();
                         let _ = result.read_to_string(&mut body)?;
-                        let data: HashMap<String, Vec<data_types::Movie>> =
+                        let data: HashMap<String, Vec<Movie>> =
                             match serde_json::from_str(&body) {
                                 Ok(data) => data,
-                                Err(_) => HashMap::<String, Vec<data_types::Movie>>::new(),
+                                Err(_) => HashMap::<String, Vec<Movie>>::new(),
                             };
 
                         if !data.is_empty() {
@@ -221,27 +225,27 @@ impl DataLayer {
                         } else {
                             self.movies.clear();
 
-                            Err(anyhow::anyhow!("No movies found"))
+                            Err(anyhow!("No movies found"))
                         }
                     }
-                    Err(e) if e.status() == Some(reqwest::StatusCode::UNAUTHORIZED) => {
+                    Err(e) if e.status() == Some(StatusCode::UNAUTHORIZED) => {
                         self.config.creds.current_token.clear();
                         self.config.store_config();
 
-                        Err(anyhow::anyhow!("Unauthorized"))
+                        Err(anyhow!("Unauthorized"))
                     }
-                    Err(e) => Err(anyhow::anyhow!("Failed to fetch movies: {}", e)),
+                    Err(e) => Err(anyhow!("Failed to fetch movies: {}", e)),
                 }
             }
         }
     }
 
-    pub fn update_movie(&mut self, movie: data_types::Movie) -> anyhow::Result<()> {
+    pub fn update_movie(&mut self, movie: Movie) -> Result<()> {
         if self.config.base_url.is_empty() {
-            return Err(anyhow::anyhow!("No base URL provided"));
+            return Err(anyhow!("No base URL provided"));
         }
 
-        if movie.id == -1 || movie == data_types::Movie::default() {
+        if movie.id == -1 || movie == Movie::default() {
             return Ok(());
         }
 
@@ -257,19 +261,19 @@ impl DataLayer {
 
         match result.error_for_status_ref() {
             Ok(_) => Ok(()),
-            Err(e) if e.status() == Some(reqwest::StatusCode::UNAUTHORIZED) => {
+            Err(e) if e.status() == Some(StatusCode::UNAUTHORIZED) => {
                 self.config.creds.current_token.clear();
                 self.config.store_config();
 
-                Err(anyhow::anyhow!("Unauthorized"))
+                Err(anyhow!("Unauthorized"))
             }
-            Err(e) => Err(anyhow::anyhow!("Failed to update movie: {}", e)),
+            Err(e) => Err(anyhow!("Failed to update movie: {}", e)),
         }
     }
 
-    pub fn delete_movie(&mut self, id: i32) -> anyhow::Result<()> {
+    pub fn delete_movie(&mut self, id: i32) -> Result<()> {
         if self.config.base_url.is_empty() {
-            return Err(anyhow::anyhow!("No base URL provided"));
+            return Err(anyhow!("No base URL provided"));
         }
 
         if id == -1 {
@@ -284,13 +288,13 @@ impl DataLayer {
 
         match result.error_for_status_ref() {
             Ok(_) => Ok(()),
-            Err(e) if e.status() == Some(reqwest::StatusCode::UNAUTHORIZED) => {
+            Err(e) if e.status() == Some(StatusCode::UNAUTHORIZED) => {
                 self.config.creds.current_token.clear();
                 self.config.store_config();
 
-                Err(anyhow::anyhow!("Unauthorized"))
+                Err(anyhow!("Unauthorized"))
             }
-            Err(e) => Err(anyhow::anyhow!("Failed to delete movie: {}", e)),
+            Err(e) => Err(anyhow!("Failed to delete movie: {}", e)),
         }
     }
 }

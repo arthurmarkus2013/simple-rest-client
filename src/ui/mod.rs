@@ -5,11 +5,13 @@ use std::{
 
 use egui::Sense;
 use egui_extras::{Column, TableBuilder};
+use egui::{CentralPanel, Color32, Context};
+use eframe::App;
 
 use crate::{
     communication_layer::DataLayer,
     config::Config,
-    data_types::{self, Credentials, Movie, Role},
+    data_types::{SessionState, Credentials, Movie, Role},
     ui::{
         alert::Alert, create_movie::CreateMovieDialog, dialog::Dialog, login::LoginDialog,
         register::RegisterDialog,
@@ -65,15 +67,15 @@ impl MainUi {
     }
 }
 
-impl eframe::App for MainUi {
-    fn update(&mut self, ctx: &egui::Context, _: &mut eframe::Frame) {
+impl App for MainUi {
+    fn update(&mut self, ctx: &Context, _: &mut eframe::Frame) {
         if !self.data_layer.borrow().config.base_url.is_empty() && self.server_url.is_empty() {
             self.server_url = self.data_layer.borrow().config.base_url.clone();
         }
 
-        egui::CentralPanel::default()
+        CentralPanel::default()
             .frame(egui::Frame {
-                fill: egui::Color32::from_white_alpha(255),
+                fill: Color32::from_white_alpha(255),
                 ..Default::default()
             })
             .show(ctx, |ui| {
@@ -123,7 +125,7 @@ impl eframe::App for MainUi {
                         }
 
                         if Config::load_config().current_session_state()
-                            == data_types::SessionState::Unauthenticated
+                            == SessionState::Unauthenticated
                         {
                             if ui.button("Login").clicked() {
                                 let dialog =

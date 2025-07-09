@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 use std::{fs, path::Path};
 
-use crate::data_types;
+use crate::data_types::{SessionState, Credentials};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Config {
     pub base_url: String,
-    pub creds: data_types::Credentials,
+    pub creds: Credentials,
 }
 
 impl Config {
@@ -31,11 +31,11 @@ impl Config {
         fs::write(cwd.join(Path::new("config.json")), config).expect("Failed to write config file");
     }
 
-    pub fn current_session_state(&self) -> data_types::SessionState {
+    pub fn current_session_state(&self) -> SessionState {
         if self.creds.current_token.is_empty() {
-            data_types::SessionState::Unauthenticated
+            SessionState::Unauthenticated
         } else {
-            data_types::SessionState::Authenticated
+            SessionState::Authenticated
         }
     }
 }

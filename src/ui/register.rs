@@ -1,5 +1,9 @@
 use crate::ui::dialog::Dialog;
 
+use egui::{Context, Align, Layout, Window};
+
+use std::any::Any;
+
 pub struct RegisterDialog {
     username: String,
     password: String,
@@ -46,8 +50,8 @@ impl RegisterDialog {
 }
 
 impl Dialog for RegisterDialog {
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
-        egui::Window::new("Register").open(open).show(ctx, |ui| {
+    fn show(&mut self, ctx: &Context, open: &mut bool) {
+        Window::new("Register").open(open).show(ctx, |ui| {
             ui.label("Register a new user");
 
             ui.horizontal(|ui| {
@@ -71,7 +75,7 @@ impl Dialog for RegisterDialog {
             });
 
             ui.horizontal(|ui| {
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                ui.with_layout(Layout::right_to_left(Align::RIGHT), |ui| {
                     if ui.button("Register").clicked() {
                         if self.valid() {
                             self.changed = true;
@@ -86,7 +90,7 @@ impl Dialog for RegisterDialog {
         (self.changed, "Register")
     }
 
-    fn as_any(&self) -> &dyn std::any::Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 }

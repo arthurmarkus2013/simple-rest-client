@@ -1,5 +1,8 @@
 use crate::{data_types::Movie, ui::dialog::Dialog};
 
+use egui::{Context, Window};
+use std::any::Any;
+
 pub struct CreateMovieDialog {
     movie: Movie,
     update_mode: bool,
@@ -48,10 +51,10 @@ impl CreateMovieDialog {
 }
 
 impl Dialog for CreateMovieDialog {
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
+    fn show(&mut self, ctx: &Context, open: &mut bool) {
         let title = if self.update_mode { "Update" } else { "Create" };
 
-        egui::Window::new(title.to_owned() + " Movie")
+        Window::new(title.to_owned() + " Movie")
             .open(open)
             .show(ctx, |ui| {
                 ui.label("Create a new movie");
@@ -97,7 +100,7 @@ impl Dialog for CreateMovieDialog {
         }
     }
 
-    fn as_any(&self) -> &dyn std::any::Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 }
