@@ -1,6 +1,6 @@
 use crate::ui::dialog::Dialog;
 
-use egui::{Context, Align, Layout, Window};
+use egui::{Align, ComboBox, Context, Layout, Window};
 
 use std::any::Any;
 
@@ -66,7 +66,7 @@ impl Dialog for RegisterDialog {
 
             ui.horizontal(|ui| {
                 ui.label("Role:");
-                egui::ComboBox::from_label("")
+                ComboBox::from_label("")
                     .selected_text(&self.role)
                     .show_ui(ui, |ui| {
                         ui.selectable_value(&mut self.role, "Admin".to_string(), "Admin");

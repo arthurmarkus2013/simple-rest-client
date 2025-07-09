@@ -1,6 +1,6 @@
 use crate::{data_types::Movie, ui::dialog::Dialog};
 
-use egui::{Context, Window};
+use egui::{Align, Context, Layout, Window};
 use std::any::Any;
 
 pub struct CreateMovieDialog {
@@ -81,7 +81,7 @@ impl Dialog for CreateMovieDialog {
                 });
 
                 ui.horizontal(|ui| {
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                    ui.with_layout(Layout::right_to_left(Align::RIGHT), |ui| {
                         if ui.button(title).clicked() {
                             if self.valid() {
                                 self.changed = true;

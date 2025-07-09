@@ -1,11 +1,7 @@
 use std::{collections::HashMap, io::Read};
 
-use crate::data_types;
-
-use data_types::Role;
-
 use crate::config::Config;
-use crate::data_types::Movie;
+use crate::data_types::{Movie, Role};
 use reqwest::{StatusCode, blocking::Client};
 
 use anyhow::{Result, anyhow};
