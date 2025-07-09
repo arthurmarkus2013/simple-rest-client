@@ -6,13 +6,13 @@ use data_types::Role;
 
 use crate::config::Config;
 use crate::data_types::Movie;
-use reqwest::{blocking::Client, StatusCode};
+use reqwest::{StatusCode, blocking::Client};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 pub struct DataLayer {
     pub config: Config,
-    pub movies: Vec<data_types::Movie>,
+    pub movies: Vec<Movie>,
     client: Client,
 }
 
@@ -175,11 +175,10 @@ impl DataLayer {
                     Ok(_) => {
                         let mut body = String::new();
                         let _ = result.read_to_string(&mut body)?;
-                        let data: HashMap<String, Movie> =
-                            match serde_json::from_str(&body) {
-                                Ok(data) => data,
-                                Err(_) => HashMap::<String, Movie>::new(),
-                            };
+                        let data: HashMap<String, Movie> = match serde_json::from_str(&body) {
+                            Ok(data) => data,
+                            Err(_) => HashMap::<String, Movie>::new(),
+                        };
 
                         if data.is_empty() {
                             self.movies = vec![data["movie"].clone()];
@@ -212,11 +211,10 @@ impl DataLayer {
                     Ok(_) => {
                         let mut body = String::new();
                         let _ = result.read_to_string(&mut body)?;
-                        let data: HashMap<String, Vec<Movie>> =
-                            match serde_json::from_str(&body) {
-                                Ok(data) => data,
-                                Err(_) => HashMap::<String, Vec<Movie>>::new(),
-                            };
+                        let data: HashMap<String, Vec<Movie>> = match serde_json::from_str(&body) {
+                            Ok(data) => data,
+                            Err(_) => HashMap::<String, Vec<Movie>>::new(),
+                        };
 
                         if !data.is_empty() {
                             self.movies = data["movies"].clone();
