@@ -1,6 +1,6 @@
 use crate::{data_types::Movie, ui::dialog::Dialog};
 
-use egui::{Align, Context, Layout, Window};
+use egui::{Align, Context, DragValue, Layout, Window};
 use std::any::Any;
 
 pub struct CreateMovieDialog {
@@ -73,7 +73,7 @@ impl Dialog for CreateMovieDialog {
                 ui.horizontal(|ui| {
                     ui.label("Release Year:");
                     ui.add(
-                        egui::DragValue::new(&mut self.movie.release_year)
+                        DragValue::new(&mut self.movie.release_year)
                             .range(1900..=2100)
                             .speed(1.0)
                             .suffix(" Year"),

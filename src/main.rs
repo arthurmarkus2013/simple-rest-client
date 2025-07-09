@@ -3,8 +3,10 @@ mod config;
 mod data_types;
 mod ui;
 
-use eframe::{run_native, NativeOptions, Error};
+use eframe::{Error, NativeOptions, run_native};
 use egui::ViewportBuilder;
+
+use ui::MainUi;
 
 fn main() -> Result<(), Error> {
     let mut viewport = ViewportBuilder::default()
@@ -23,6 +25,6 @@ fn main() -> Result<(), Error> {
     run_native(
         "Simple REST Client",
         options,
-        Box::new(|_| Ok(Box::<ui::MainUi>::new(ui::MainUi::new()))),
+        Box::new(|_| Ok(Box::<MainUi>::new(MainUi::new()))),
     )
 }
